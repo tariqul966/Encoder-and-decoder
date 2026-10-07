@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 Encoder & Decoder</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-color: #cccccc;
+      --primary-color: #2563eb;
+      --primary-hover: #1d4ed8;
+      --error-color: #dc2626;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 800px;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: 2px solid var(--primary-color);
+      border-color: transparent;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    button {
+      flex: 1;
+      padding: 0.75rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    button.secondary {
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    button.secondary:hover {
+      background-color: #d1d5db;
+    }
+
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .copy-btn {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      width: auto;
+    }
+
+    .error {
+      color: var(--error-color);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Base64 Encoder &amp; Decoder</h1>
+
+    <div class="section">
+      <label for="inputText">Input Text</label>
+      <textarea id="inputText" placeholder="Enter text or Base64 code here..."></textarea>
+    </div>
+
+    <div class="actions">
+      <button onclick="encodeBase64()">Encode to Base64</button>
+      <button onclick="decodeBase64()">Decode from Base64</button>
+      <button class="secondary" onclick="clearFields()">Clear</button>
+    </div>
+
+    <div class="section">
+      <div class="output-header">
+        <label for="outputText">Output Text</label>
+        <button class="secondary copy-btn" onclick="copyOutput()">Copy</button>
+      </div>
+      <textarea id="outputText" readonly placeholder="Result will appear here..."></textarea>
+      <div id="errorMessage" class="error"></div>
+    </div>
+  </div>
+
+  <script>
+    // Handles UTF-8 encoding properly (supports emojis & non-ASCII characters)
+    function encodeBase64() {
+      const input = document.getElementById('inputText').value;
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.style.display = 'none';
+
+      try {
+        const bytes = new TextEncoder().encode(input);
+        const binString = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+        document.getElementById('outputText').value = btoa(binString);
+      } catch (e) {
+        showError("Failed to encode input text.");
+      }
+    }
+
+    // Handles UTF-8 decoding properly
+    function decodeBase64() {
+      const input = document.getElementById('inputText').value.trim();
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.style.display = 'none';
+
+      if (!input) {
+        document.getElementById('outputText').value = "";
+        return;
+      }
+
+      try {
+        const binString = atob(input);
+        const bytes = Uint8Array.from(binString, (char) => char.charCodeAt(0));
+        document.getElementById('outputText').value = new TextDecoder().decode(bytes);
+      } catch (e) {
+        showError("Invalid Base64 string.");
+      }
+    }
+
+    function clearFields() {
+      document.getElementById('inputText').value = "";
+      document.getElementById('outputText').value = "";
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function copyOutput() {
+      const output = document.getElementById('outputText');
+      if (output.value) {
+        navigator.clipboard.writeText(output.value);
+      }
+    }
+
+    function showError(msg) {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.textContent = msg;
+      errorDiv.style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>
