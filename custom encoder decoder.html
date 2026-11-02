@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Encoder & Decoder</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --border: #334155;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background-color: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-color);
+            padding: 12px;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-muted);
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .error-msg {
+            color: #f87171;
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><span>Custom Encoder & Decoder</span> Tool</h1>
+        <!--<p class="subtitle">Secure text utility using standard Base64 wrapped in your custom r10n schema.</p>-->
+
+        <div class="input-group">
+            <label for="inputText">Input Text</label>
+            <textarea id="inputText" placeholder="Type or paste your text here..."></textarea>
+            <div id="errorMsg" class="error-msg">Invalid format or corrupted Base64 sequence for decoding.</div>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="encryptText()">Encrypt</button>
+            <button class="secondary" onclick="decryptText()">Decrypt</button>
+        </div>
+
+        <div class="input-group">
+            <div class="output-header">
+                <label for="outputText">Output Result</label>
+                <button class="secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="copyOutput()">Copy</button>
+            </div>
+            <textarea id="outputText" readonly placeholder="Result will appear here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        const PREFIX = "r10n+";
+
+        function encryptText() {
+            const input = document.getElementById('inputText').value;
+            const errorEl = document.getElementById('errorMsg');
+            errorEl.style.display = 'none';
+
+            if (!input) {
+                document.getElementById('outputText').value = '';
+                return;
+            }
+
+            try {
+                // Encode standard string to UTF-8 safe Base64
+                const encodedBase64 = btoa(encodeURIComponent(input).replace(/%([0-9A-F]{2})/g,
+                    function toSolidBytes(match, p1) {
+                        return String.fromCharCode('0x' + p1);
+                    }));
+
+                // Prepend your custom r10n format wrapper
+                document.getElementById('outputText').value = PREFIX + encodedBase64;
+            } catch (e) {
+                errorEl.textContent = "Encryption failed.";
+                errorEl.style.display = 'block';
+            }
+        }
+
+        function decryptText() {
+            let input = document.getElementById('inputText').value.trim();
+            const errorEl = document.getElementById('errorMsg');
+            errorEl.style.display = 'none';
+
+            if (!input) {
+                document.getElementById('outputText').value = '';
+                return;
+            }
+
+            // Check and remove the custom prefix if present
+            if (input.startsWith(PREFIX)) {
+                input = input.slice(PREFIX.length);
+            }
+
+            try {
+                // Decode Base64 back to original UTF-8 string safely
+                const decodedBytes = atob(input);
+                const decodedString = decodeURIComponent(Array.prototype.map.call(decodedBytes, function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                document.getElementById('outputText').value = decodedString;
+            } catch (e) {
+                errorEl.textContent = "Invalid format or corrupted Base64 sequence.";
+                errorEl.style.display = 'block';
+                document.getElementById('outputText').value = '';
+            }
+        }
+
+        function copyOutput() {
+            const outputText = document.getElementById('outputText');
+            if (!outputText.value) return;
+            
+            navigator.clipboard.writeText(outputText.value).then(() => {
+                const copyBtn = document.querySelector('.output-header button');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>
